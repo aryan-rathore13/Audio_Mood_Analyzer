@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - Audio Mood Analyzer</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+    .container { max-width: 800px; margin: 0 auto; text-align: center; }
+    input[type="text"], input[type="file"] { width: 70%; padding: 10px; font-size: 16px; margin: 10px 0; }
+    button { padding: 10px 20px; font-size: 16px; background: #1db954; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #1ed760; }
+    #suggestions, #audioResult { margin-top: 20px; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to Your Dashboard</h1>
+    <p>Enter a prompt or upload an audio file to get song suggestions!</p>
+    <input type="text" id="sessionId" placeholder="Session ID (optional)" value="default">
+
+    <h3>Prompt Suggestions</h3>
+    <input type="text" id="promptInput" placeholder="e.g., I am going through a breakup, cheer me up">
+    <button onclick="getSuggestions()">Get Suggestions</button>
+    <div id="suggestions"></div>
+
+    <h3>Audio Mood Analysis</h3>
+    <input type="file" id="audioInput" accept="audio/*">
+    <button onclick="analyzeAudio()">Analyze Audio</button>
+    <div id="audioResult"></div>
+  </div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (!token) window.location.href = '/';
+
+    const ws = new WebSocket('ws://localhost:3000');
+    ws.onopen = () => {
+      const sessionId = document.getElementById('sessionId').value || 'default';
+      ws.send(JSON.stringify({ action: 'join', sessionId }));
+    };
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'suggestion') {
+        document.getElementById('suggestions').innerHTML = `
+          <h3>Suggestions (${data.data.mood} - ${data.data.language})</h3>
+          <p>Playlist created! <a href="${data.data.playlistUrl}" target="_blank">Open in Spotify</a></p>
+        `;
+      } else if (data.type === 'audio') {
+        document.getElementById('audioResult').innerHTML = `
+          <h3>Audio Mood: ${data.data.mood}</h3>
+          <p>Playlist created! <a href="${data.data.playlistUrl}" target="_blank">Open in Spotify</a></p>
+        `;
+      }
+    };
+
+    async function getSuggestions() {
+      const prompt = document.getElementById('promptInput').value;
+      const sessionId = document.getElementById('sessionId').value || 'default';
+      if (!prompt) {
+        alert('Please enter a prompt!');
+        return;
+      }
+
+      try {
+        const response = await fetch('/suggest', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token,
+          },
+          body: JSON.stringify({ prompt, sessionId }),
+        });
+        const data = await response.json();
+        if (!response.ok) alert(`Error: ${data.error}`);
+      } catch (error) {
+        alert('Failed to fetch suggestions');
+      }
+    }
+
+    async function analyzeAudio() {
+      const audioInput = document.getElementById('audioInput');
+      const sessionId = document.getElementById('sessionId').value || 'default';
+      if (!audioInput.files[0]) {
+        alert('Please upload an audio file!');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('audio', audioInput.files[0]);
+      formData.append('sessionId', sessionId);
+
+      try {
+        const response = await fetch('/analyze-audio', {
+          method: 'POST',
+          headers: { 'Authorization': token },
+          body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok) alert(`Error: ${data.error}`);
+      } catch (error) {
+        alert('Failed to analyze audio');
+      }
+    }
+  </script>
+</body>
+</html>
