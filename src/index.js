@@ -16,16 +16,19 @@ const server = require('http').createServer(app);
 const wss = new WebSocket.Server({ server });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../client/dist'), {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-    }
-    if (filePath.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    }
-  }
-}));
+app.use(express.urlencoded({ extended: true }));
+const cors = require('cors');
+app.use(cors({ origin: '*' }));
+// app.use(express.static(path.join(__dirname, '../client/dist'), {
+//   setHeaders: (res, filePath) => {
+//     if (filePath.endsWith('.css')) {
+//       res.setHeader('Content-Type', 'text/css');
+//     }
+//     if (filePath.endsWith('.js')) {
+//       res.setHeader('Content-Type', 'application/javascript');
+//     }
+//   }
+// }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 50 }));
 
 // MongoDB Connection
@@ -65,6 +68,7 @@ const authenticate = (req, res, next) => {
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });
     req.user = decoded;
+    console.log("Token scopes in use:", decoded);
     spotifyApi.setAccessToken(decoded.accessToken);
     next();
   });

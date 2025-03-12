@@ -1,30 +1,34 @@
-import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision.tsx";
+import Globe from "@/components/ui/globe";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Dashboard from "./components/Dashboard.tsx";
 
 const Login = () => {
   const handleLogin = () => {
-    window.location.href = "http://localhost:3000/login";
+    const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID; // From .env
+    const redirectUri = `${import.meta.env.VITE_API_URL}/callback`; // Changed to match backend
+    const scopes = "user-read-private playlist-modify-public playlist-modify-private";
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+    console.log("Spotify Auth URL:", authUrl);
+    window.location.href = authUrl;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-neutral-100 dark:from-neutral-950 dark:to-neutral-800 flex items-center justify-center">
-      <BackgroundBeamsWithCollision>
-        <div className="text-center relative z-10 p-6">
-          <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold text-black dark:text-white font-sans tracking-tight mb-6">
-            Audio Mood Analyzer
-          </h1>
-          <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8">
-            Login with Spotify to analyze your audio and moods!
-          </p>
-          <button
-            onClick={handleLogin}
-            className="px-6 py-3 bg-[#1db954] text-white font-semibold rounded-md hover:bg-[#1ed760] transition-colors"
-          >
-            Login with Spotify
-          </button>
-        </div>
-      </BackgroundBeamsWithCollision>
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center relative overflow-hidden">
+      <Globe />
+      <div className="text-center relative z-10 p-6">
+        <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold text-white font-sans tracking-tight mb-6">
+          Audio Mood Analyzer
+        </h1>
+        <p className="text-lg md:text-xl text-gray-300 mb-8">
+          Login with Spotify to analyze your audio and moods!
+        </p>
+        <button
+          onClick={handleLogin}
+          className="px-8 py-4 bg-[#1db954] text-white font-semibold rounded-full shadow-lg hover:bg-[#1ed760] transition-colors"
+        >
+          Login with Spotify
+        </button>
+      </div>
     </div>
   );
 };
