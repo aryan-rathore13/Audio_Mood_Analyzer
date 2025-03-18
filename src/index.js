@@ -136,7 +136,7 @@ app.get('/callback', async (req, res) => {
     await session.save();
 
     const token = jwt.sign({ spotifyId, accessToken }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.redirect(`/dashboard?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?token=${token}`);
   } catch (error) {
     console.error('Spotify auth error:', error);
     res.status(500).json({ error: 'Authentication failed' });
