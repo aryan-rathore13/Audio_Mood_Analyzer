@@ -18,7 +18,7 @@ const wss = new WebSocket.Server({ server });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const cors = require('cors');
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 50 }));
 
 // MongoDB Connection
@@ -31,7 +31,7 @@ mongoose.connect(process.env.MONGO_URI)
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: 'http://localhost:3000/callback',
+  redirectUri: `${process.env.BASE_URL || 'http://localhost:3000'}/callback`,
 });
 
 // Session Schema
@@ -224,9 +224,9 @@ app.post('/analyze-audio', authenticate, upload.single('audio'), async (req, res
 });
 
 // Catch-all route for React Router (must be last)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-});
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+// });
 
 // Start server
 server.listen(3000, () => console.log('Server running on port 3000'));
