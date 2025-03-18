@@ -8,9 +8,9 @@ const dotenv = require('dotenv');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const ffmpeg = require('fluent-ffmpeg'); // Add this for ffprobe
+const ffmpeg = require('fluent-ffmpeg');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '../.env') }); // Look for .env in root
 const app = express();
 const server = require('http').createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -19,19 +19,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const cors = require('cors');
 app.use(cors({ origin: '*' }));
-// app.use(express.static(path.join(__dirname, '../client/dist'), {
-//   setHeaders: (res, filePath) => {
-//     if (filePath.endsWith('.css')) {
-//       res.setHeader('Content-Type', 'text/css');
-//     }
-//     if (filePath.endsWith('.js')) {
-//       res.setHeader('Content-Type', 'application/javascript');
-//     }
-//   }
-// }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 50 }));
 
 // MongoDB Connection
+console.log('MONGO_URI:', process.env.MONGO_URI); // Debug
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
